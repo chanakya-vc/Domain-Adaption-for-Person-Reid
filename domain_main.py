@@ -21,10 +21,12 @@ class Prid_Dataset(Dataset):
     def __init__(self,data_src,transform,train):
         self.transform=transform
         self.train=train
-        self.range=(0,100) if self.train else (101,200)
+        self.range=(1,100) if self.train else (101,200)
         self.ImgMapping=datacollector(data_src,['cam_a','cam_b'],self.range)
         self.IdSet,self.IdtoImgMappingDict=idcollector(self.ImgMapping)
         self.IdSet=list(self.IdSet)
+        for key in self.IdtoImgMappingDict.keys():
+            print(key)
     def __len__(self):
         'Denotes the total number of samples'
         return len(self.IdSet)
@@ -32,6 +34,7 @@ class Prid_Dataset(Dataset):
     def __getitem__(self, index):
         'Generates one sample of data gives you all the samples of an id'
         # Select sample
+        index+=1
         img_paths = self.IdtoImgMappingDict[index]
         if len(img_paths)>20:
             img_paths=random.sample(img_paths,20)
@@ -79,7 +82,6 @@ if __name__ == '__main__':
     #load the model
     model=Model(last_conv_stride=1)
     model_weight=torch.load(PATH)
-    print(model)
     model.load_state_dict(model_weight)
     model.cuda() 
     batch_size=4
@@ -106,6 +108,7 @@ if __name__ == '__main__':
             imgs, labels= imgs.to(device),labels.to(device)
             print(imgs.shape,labels.shape)
             feat=model(imgs)
+            print(feat.shape)
             loss, p_inds, n_inds, dist_ap, dist_an, dist_mat = global_loss(tri_loss, feat, labels)
             loss.backward()
             # run adam for each batch
